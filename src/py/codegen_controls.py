@@ -77,7 +77,7 @@ def fill_template(template, data):
 
 def main(argv):
     # Parse command line arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="codegen_controls.py")
     parser.add_argument('-o', dest='output', metavar='file', type=str,
                         help='Output file name. Defaults to standard output if not specified.')
     parser.add_argument('input', type=str,
@@ -85,12 +85,10 @@ def main(argv):
     parser.add_argument('template', type=str,
                         help='Template file name.')
     parser.add_argument('--mode', type=str, required=True,
+                        choices=['controls', 'properties'],
                         help='Mode is either "controls" or "properties"')
+    print(argv)
     args = parser.parse_args(argv[1:])
-
-    if args.mode not in ['controls', 'properties']:
-        print(f'Invalid mode option "{args.mode}"', file=sys.stderr)
-        return -1
 
     data = open(args.input, 'rb').read()
     controls = yaml.safe_load(data)['controls']
