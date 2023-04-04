@@ -87,7 +87,6 @@ def main(argv):
     parser.add_argument('--mode', type=str, required=True,
                         choices=['controls', 'properties'],
                         help='Mode is either "controls" or "properties"')
-    print(argv)
     args = parser.parse_args(argv[1:])
 
     data = open(args.input, 'rb').read()
