@@ -23,17 +23,17 @@ pycamera_enabled = true
 
 subdir('libcamera')
 
-configure_file(input: 'setup.py', output: 'setup.py', copy: true)
+setup_py_copy = configure_file(input: 'setup.py', output: 'setup.py', copy: true)
 
 
-setup_py = files('setup.py')
+#setup_py = files('setup.py')
 
 
 pycamera = custom_target('python_setup_build',
     input: pycamera_sources,
-    command: [py3, setup_py, 'bdist_wheel'],
+    command: [py3, setup_py_copy, 'bdist_wheel'],
     output: ['libcamera.cpython-39-x86_64-linux-gnu.so'],
-    # depend_files: pycamera_sources,
+    depends: libcamera,
     build_by_default: true,
 )
 

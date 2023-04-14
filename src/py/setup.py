@@ -2,9 +2,9 @@ from glob import glob
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension
 
-from codegen_controls import main as gen_controls
-from codegen_formats import main as gen_formats
-from pybind11_stubgen import main as gen_stub
+# from codegen_controls import main as gen_controls
+# from codegen_formats import main as gen_formats
+# from pybind11_stubgen import main as gen_stub
 
 
 # NOTE(meawoppl) These can be vastly simplified to not go through 
@@ -35,6 +35,7 @@ from pybind11_stubgen import main as gen_stub
 
 import os
 this_dir = os.path.dirname(os.path.abspath(__file__))
+print("Running from ", this_dir)
 os.chdir(this_dir)
 
 cpp_sources = list(sorted(glob("libcamera/*.cpp"))) 
@@ -43,11 +44,11 @@ ext_modules = [
     Pybind11Extension(
         "libcamera",
         cpp_sources,
-        include_dirs=['../../include'],
+        include_dirs=['../../include', "../../../include"],
         extra_compile_args=[
             '-fvisibility=hidden',
             '-Wno-shadow',
-            '-DPYBIND11_USE_SMART_HOLDER_AS_DEFAULT',
+            '-DLIBCAMERA_BASE_PRIVATE',
         ],
 
     ),
