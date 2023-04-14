@@ -9,6 +9,25 @@ import sys
 import yaml
 
 
+def generate(formats):
+    fmts = []
+
+    for format in formats:
+        name, format = format.popitem()
+        fmts.append(f'\t\t.def_readonly_static("{name}", &libcamera::formats::{name})')
+
+    return {'formats': '\n'.join(fmts)}
+
+
+def fill_template(template, data):
+    with open(template, encoding='utf-8') as f:
+        template = f.read()
+
+    template = string.Template(template)
+    return template.substitute(data)
+
+
+
 def find_common_prefix(strings):
     prefix = strings[0]
 
@@ -68,16 +87,9 @@ def generate_py(controls, mode):
     return {'controls': out}
 
 
-def fill_template(template, data):
-    template = open(template, 'rb').read()
-    template = template.decode('utf-8')
-    template = string.Template(template)
-    return template.substitute(data)
-
-
-def main(argv):
+def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="codegen_controls.py")
     parser.add_argument('-o', dest='output', metavar='file', type=str,
                         help='Output file name. Defaults to standard output if not specified.')
     parser.add_argument('input', type=str,
@@ -85,29 +97,29 @@ def main(argv):
     parser.add_argument('template', type=str,
                         help='Template file name.')
     parser.add_argument('--mode', type=str, required=True,
+                        choices=['controls', 'properties', 'formats'],
                         help='Mode is either "controls" or "properties"')
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args()
 
-    if args.mode not in ['controls', 'properties']:
-        print(f'Invalid mode option "{args.mode}"', file=sys.stderr)
-        return -1
+    with open(args.input, 'rb') as f:
+        input_yml = yaml.safe_load(f)
 
-    data = open(args.input, 'rb').read()
-    controls = yaml.safe_load(data)['controls']
+    if args.mode == 'formats':
+        data = generate(input_yml['formats'])
+    else:
+        data = generate_py(input_yml['controls'], args.mode)
 
-    data = generate_py(controls, args.mode)
-
-    data = fill_template(args.template, data)
+    formatted = fill_template(args.template, data)
 
     if args.output:
         output = open(args.output, 'wb')
-        output.write(data.encode('utf-8'))
+        output.write(formatted.encode('utf-8'))
         output.close()
     else:
-        sys.stdout.write(data)
+        sys.stdout.write(formatted)
 
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    main()

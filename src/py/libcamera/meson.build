@@ -1,41 +1,40 @@
 # SPDX-License-Identifier: CC0-1.0
 
-py3_dep = dependency('python3', required : get_option('pycamera'))
-
-if not py3_dep.found()
-    pycamera_enabled = false
-    subdir_done()
-endif
-
-pycamera_enabled = true
-
-pybind11_proj = subproject('pybind11')
-pybind11_dep = pybind11_proj.get_variable('pybind11_dep')
-
 pycamera_sources = files([
+    'py_camera_manager.h',
     'py_camera_manager.cpp',
     'py_enums.cpp',
     'py_geometry.cpp',
+    'py_helpers.h',
     'py_helpers.cpp',
+    'py_main.h',
     'py_main.cpp',
 ])
 
-# Generate controls
+foreach f : pycamera_sources
+    configure_file(
+        input: f,
+        output: '@PLAINNAME@',
+        copy: true,
+    )
+endforeach
 
+# Generate controls
 gen_py_controls_input_files = files([
     '../../libcamera/control_ids.yaml',
     'py_controls_generated.cpp.in',
 ])
 
-gen_py_controls = files('gen-py-controls.py')
+gen_py_controls = files('../codegen.py')
 
 pycamera_sources += custom_target('py_gen_controls',
                                   input : gen_py_controls_input_files,
                                   output : ['py_controls_generated.cpp'],
-                                  command : [gen_py_controls, '--mode', 'controls', '-o', '@OUTPUT@', '@INPUT@'])
+                                  command : [gen_py_controls, '--mode', 'controls', '-o', '@OUTPUT@', '@INPUT@'],
+                                  build_always: true
+                                  )
 
 # Generate properties
-
 gen_py_property_enums_input_files = files([
     '../../libcamera/property_ids.yaml',
     'py_properties_generated.cpp.in',
@@ -47,18 +46,42 @@ pycamera_sources += custom_target('py_gen_properties',
                                   command : [gen_py_controls, '--mode', 'properties', '-o', '@OUTPUT@', '@INPUT@'])
 
 # Generate formats
-
 gen_py_formats_input_files = files([
     '../../libcamera/formats.yaml',
     'py_formats_generated.cpp.in',
 ])
 
-gen_py_formats = files('gen-py-formats.py')
-
 pycamera_sources += custom_target('py_gen_formats',
                                   input : gen_py_formats_input_files,
                                   output : ['py_formats_generated.cpp'],
-                                  command : [gen_py_formats, '-o', '@OUTPUT@', '@INPUT@'])
+                                  command : [gen_py_controls, '--mode', 'formats', '-o', '@OUTPUT@', '@INPUT@'])
+
+
+run_command('cp', files('__init__.py'), 
+            meson.current_build_dir() / '__init__.py',
+            check: true)
+
+run_command('cp', '-r', meson.current_source_dir() / 'utils',
+            meson.current_build_dir() / 'utils',
+            check: true)
+
+subdir_done()
+
+
+
+
+
+
+pycamera_sources = files([
+    'py_camera_manager.cpp',
+    'py_enums.cpp',
+    'py_geometry.cpp',
+    'py_helpers.cpp',
+    'py_main.cpp',
+])
+
+
+
 
 pycamera_deps = [
     libcamera_private,
