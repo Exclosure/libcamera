@@ -25,8 +25,6 @@ subdir('libcamera')
 
 setup_py_copy = configure_file(input: 'setup.py', output: 'setup.py', copy: true)
 
-
-
 pycamera = custom_target('python_setup_build',
     input: pycamera_sources,
     command: [py3, setup_py_copy, 'bdist_wheel'],

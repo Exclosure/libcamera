@@ -87,7 +87,7 @@ def generate_py(controls, mode):
     return {'controls': out}
 
 
-def main():
+def main(argv: list[str] = sys.argv[1:]):
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog="codegen_controls.py")
     parser.add_argument('-o', dest='output', metavar='file', type=str,
@@ -99,7 +99,7 @@ def main():
     parser.add_argument('--mode', type=str, required=True,
                         choices=['controls', 'properties', 'formats'],
                         help='Mode is either "controls" or "properties"')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     with open(args.input, 'rb') as f:
         input_yml = yaml.safe_load(f)
