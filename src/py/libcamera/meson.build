@@ -25,7 +25,7 @@ gen_py_controls_input_files = files([
     'py_controls_generated.cpp.in',
 ])
 
-gen_py_controls = files('../codegen_controls.py')
+gen_py_controls = files('../codegen.py')
 
 pycamera_sources += custom_target('py_gen_controls',
                                   input : gen_py_controls_input_files,
@@ -35,7 +35,6 @@ pycamera_sources += custom_target('py_gen_controls',
                                   )
 
 # Generate properties
-
 gen_py_property_enums_input_files = files([
     '../../libcamera/property_ids.yaml',
     'py_properties_generated.cpp.in',
@@ -47,18 +46,15 @@ pycamera_sources += custom_target('py_gen_properties',
                                   command : [gen_py_controls, '--mode', 'properties', '-o', '@OUTPUT@', '@INPUT@'])
 
 # Generate formats
-
 gen_py_formats_input_files = files([
     '../../libcamera/formats.yaml',
     'py_formats_generated.cpp.in',
 ])
 
-gen_py_formats = files('../codegen_formats.py')
-
 pycamera_sources += custom_target('py_gen_formats',
                                   input : gen_py_formats_input_files,
                                   output : ['py_formats_generated.cpp'],
-                                  command : [gen_py_formats, '-o', '@OUTPUT@', '@INPUT@'])
+                                  command : [gen_py_controls, '--mode', 'formats', '-o', '@OUTPUT@', '@INPUT@'])
 
 
 run_command('cp', files('__init__.py'), 

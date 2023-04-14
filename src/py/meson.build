@@ -26,8 +26,6 @@ subdir('libcamera')
 setup_py_copy = configure_file(input: 'setup.py', output: 'setup.py', copy: true)
 
 
-#setup_py = files('setup.py')
-
 
 pycamera = custom_target('python_setup_build',
     input: pycamera_sources,
@@ -37,51 +35,5 @@ pycamera = custom_target('python_setup_build',
     build_by_default: true,
 )
 
-# message('cbd:', meson.current_build_dir())
-# install_data(
-#     setup_py,
-#     sources: pycamera_sources,
-#     install_dir: meson.current_build_dir())
-
-# install_data(sources: pycamera_sources, install_dir: meson.current_build_dir())
-
-
-# run_python_build = custom_target('run_python_build',
-#     input: ['setup.py'],
-#     output: [join_paths('libcamera', '_libcamera.so')],
-#     command: [py3, 'setup.py', 'build'],
-#     build_by_default: true,
-#     depend_files: [pycamera_sources],
-# )
-
-
-
-# pycamera_deps = declare_dependency(
-#     sources: pycamera_sources
-# )
-
-# pycamera = run_target('pycamera',
-#     command : [py3, 'setup.py', 'build'],
-#     depends : [libcamera_h, pycamera_deps],
-# )
-
-# subdir('libcamera')
-# # python = find_program('python', required : true)
-# py_setup_build = run_target('pycamera_setup_build',
-#     command : [py3, 'setup.py', 'build'],
-#     depends : [libcamera_h],
-# )
-
-# # custom_target('libcamera_python_bindings',
-# #     command: ['python', 'setup.py', 'build'],
-# #     depend_files: [libcamera_h],
-# #     output: ['libcamera/_libcamera.so'],
-# # )
-
-# run_target('pycamera_install',
-#     command : ['python', 'setup.py', 'install'],
-#     depends : [py_setup_build],
-# )
-
-# meson.add_install_script('python', 'setup.py', 'install')
+meson.add_install_script(py3, setup_py_copy, 'install')
 
