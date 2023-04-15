@@ -3,7 +3,7 @@ from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension
 
 # from codegen import main as codegen
-# from pybind11_stubgen import main as gen_stub
+from pybind11_stubgen import main as gen_stub
 
 
 # NOTE(meawoppl) These can be vastly simplified to not go through 
@@ -29,7 +29,6 @@ from pybind11.setup_helpers import Pybind11Extension
 #     'libcamera/py_formats_generated.cpp.in',
 # ])
 
-#gen_stub(["pybind11-stubgen", "--no-setup-py", "-o", "libcamera", "libcamera"])
 
 
 import os
@@ -53,6 +52,22 @@ ext_modules = [
     ),
 ]
 
+from setuptools import setup, Extension, find_packages, Command
+
+# Custom command to generate stubs using pybind11-stubgen
+class GenerateStubs(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        gen_stub(["libcamera", "-o", "libcamera"])
+
+
 setup(
     name='libcamera',
     version='0.0.4',
@@ -61,5 +76,6 @@ setup(
     author_email=' libcamera-devel@lists.libcamera.org',
     url='https://libcamera.org/',
     packages=['libcamera', 'libcamera.utils'],
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
+    cmdclass={"generate_stubs": GenerateStubs},
 )

@@ -23,15 +23,15 @@ pycamera_enabled = true
 
 subdir('libcamera')
 
-setup_py_copy = configure_file(input: 'setup.py', output: 'setup.py', copy: true)
+setup_py = configure_file(input: 'setup.py', output: 'setup.py', copy: true)
 
 pycamera = custom_target('python_setup_build',
     input: pycamera_sources,
-    command: [py3, setup_py_copy, 'bdist_wheel'],
+    command: [py3, setup_py, 'bdist_wheel'],
     output: ['libcamera.cpython-39-x86_64-linux-gnu.so'],
     depends: libcamera,
     build_by_default: true,
 )
 
-meson.add_install_script(py3, setup_py_copy, 'install')
+meson.add_install_script(py3, setup_py, 'install')
 
