@@ -48,6 +48,7 @@ ext_modules = [
             '-fvisibility=hidden',
             '-Wno-shadow',
             '-DLIBCAMERA_BASE_PRIVATE',
+            '-std=c++17',
         ],
     ),
 ]
