@@ -44,6 +44,7 @@ ext_modules = [
         cpp_sources,
         libraries=['camera'],
         include_dirs=['../../include', "../../../include"],
+        library_dirs=['../libcamera'],
         extra_compile_args=[
             '-fvisibility=hidden',
             '-Wno-shadow',
