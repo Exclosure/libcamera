@@ -72,7 +72,7 @@ class GenerateStubs(Command):
 
 setup(
     name='libcamera',
-    version='0.0.4',
+    version='0.0.5',
     description='Python wrapper to `libcamera`',
     author='Libcamera Developers',
     author_email=' libcamera-devel@lists.libcamera.org',
