@@ -2,7 +2,7 @@
 
 project('libcamera', 'c', 'cpp',
     meson_version : '>= 0.56',
-    version : '0.0.4',
+    version : '0.0.5',
     default_options : [
         'werror=true',
         'warning_level=2',
@@ -136,6 +136,21 @@ if cc.get_id() == 'gcc'
         ]
     endif
 
+    # gcc 13 implements the C++23 version of automatic move from local
+    # variables in return statements (see
+    # https://en.cppreference.com/w/cpp/language/return). As a result, some
+    # previously required explicit std::move() in return statements generate
+    # warnings. Those moves can't be removed as older compiler versions could
+    # use copy constructors instead of move constructors. The easiest fix is to
+    # disable the warning. With -Wpessimizing-move enabled, the compiler will
+    # still warn of pessimizing moves, only the redundant but not pessimizing
+    # moves will be ignored.
+    if cc.version().version_compare('>=13')
+        cpp_arguments += [
+            '-Wno-redundant-move',
+        ]
+    endif
+
     # gcc 7.1 introduced processor-specific ABI breakages related to parameter
     # passing on ARM platforms. This generates a large number of messages
     # during compilation. Silence them.
@@ -179,8 +194,8 @@ arch_x86 = ['x86', 'x86_64']
 pipelines_support = {
     'imx8-isi':     arch_arm,
     'ipu3':         arch_x86,
-    'raspberrypi':  arch_arm,
     'rkisp1':       arch_arm,
+    'rpi/vc4':      arch_arm,
     'simple':       arch_arm,
     'uvcvideo':     ['any'],
     'vimc':         ['test'],
@@ -247,7 +262,7 @@ py_mod.find_installation('python3', modules: py_modules)
 ## Summarise Configurations
 summary({
             'Enabled pipelines': pipelines,
-            'Enabled IPA modules': enabled_ipa_modules,
+            'Enabled IPA modules': enabled_ipa_names,
             'Tracing support': tracing_enabled,
             'Android support': android_enabled,
             'GStreamer support': gst_enabled,

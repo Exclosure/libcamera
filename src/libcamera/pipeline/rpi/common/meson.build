@@ -2,9 +2,6 @@
 
 libcamera_sources += files([
     'delayed_controls.cpp',
-    'dma_heaps.cpp',
-    'raspberrypi.cpp',
+    'pipeline_base.cpp',
     'rpi_stream.cpp',
 ])
-
-subdir('data')

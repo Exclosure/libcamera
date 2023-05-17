@@ -14,12 +14,30 @@ LOG_DEFINE_CATEGORY(RPISTREAM)
 
 namespace RPi {
 
+void Stream::setFlags(StreamFlags flags)
+{
+	flags_ |= flags;
+
+	/* Import streams cannot be external. */
+	ASSERT(!(flags_ & StreamFlag::External) || !(flags_ & StreamFlag::ImportOnly));
+}
+
+void Stream::clearFlags(StreamFlags flags)
+{
+	flags_ &= ~flags;
+}
+
+RPi::Stream::StreamFlags Stream::getFlags() const
+{
+	return flags_;
+}
+
 V4L2VideoDevice *Stream::dev() const
 {
 	return dev_.get();
 }
 
-std::string Stream::name() const
+const std::string &Stream::name() const
 {
 	return name_;
 }
@@ -30,18 +48,6 @@ void Stream::resetBuffers()
 	availableBuffers_ = {};
 	for (auto const &buffer : internalBuffers_)
 		availableBuffers_.push(buffer.get());
-}
-
-void Stream::setExternal(bool external)
-{
-	/* Import streams cannot be external. */
-	ASSERT(!external || !importOnly_);
-	external_ = external;
-}
-
-bool Stream::isExternal() const
-{
-	return external_;
 }
 
 void Stream::setExportedBuffers(std::vector<std::unique_ptr<FrameBuffer>> *buffers)
@@ -55,17 +61,17 @@ const BufferMap &Stream::getBuffers() const
 	return bufferMap_;
 }
 
-int Stream::getBufferId(FrameBuffer *buffer) const
+unsigned int Stream::getBufferId(FrameBuffer *buffer) const
 {
-	if (importOnly_)
-		return -1;
+	if (flags_ & StreamFlag::ImportOnly)
+		return 0;
 
 	/* Find the buffer in the map, and return the buffer id. */
 	auto it = std::find_if(bufferMap_.begin(), bufferMap_.end(),
 			       [&buffer](auto const &p) { return p.second == buffer; });
 
 	if (it == bufferMap_.end())
-		return -1;
+		return 0;
 
 	return it->first;
 }
@@ -77,10 +83,10 @@ void Stream::setExternalBuffer(FrameBuffer *buffer)
 
 void Stream::removeExternalBuffer(FrameBuffer *buffer)
 {
-	int id = getBufferId(buffer);
+	unsigned int id = getBufferId(buffer);
 
 	/* Ensure we have this buffer in the stream, and it is marked external. */
-	ASSERT(id != -1 && (id & BufferMask::MaskExternalBuffer));
+	ASSERT(id & BufferMask::MaskExternalBuffer);
 	bufferMap_.erase(id);
 }
 
@@ -88,7 +94,7 @@ int Stream::prepareBuffers(unsigned int count)
 {
 	int ret;
 
-	if (!importOnly_) {
+	if (!(flags_ & StreamFlag::ImportOnly)) {
 		if (count) {
 			/* Export some frame buffers for internal use. */
 			ret = dev_->exportBuffers(count, &internalBuffers_);
@@ -113,7 +119,7 @@ int Stream::prepareBuffers(unsigned int count)
 	 * \todo Find a better heuristic, or, even better, an exact solution to
 	 * this issue.
 	 */
-	if (isExternal() || importOnly_)
+	if ((flags_ & StreamFlag::External) || (flags_ & StreamFlag::ImportOnly))
 		count = count * 2;
 
 	return dev_->importBuffers(count);
@@ -160,7 +166,7 @@ int Stream::queueBuffer(FrameBuffer *buffer)
 
 void Stream::returnBuffer(FrameBuffer *buffer)
 {
-	if (!external_) {
+	if (!(flags_ & StreamFlag::External)) {
 		/* For internal buffers, simply requeue back to the device. */
 		queueToDevice(buffer);
 		return;
@@ -204,7 +210,7 @@ int Stream::queueAllBuffers()
 {
 	int ret;
 
-	if (external_)
+	if (flags_ & StreamFlag::External)
 		return 0;
 
 	while (!availableBuffers_.empty()) {

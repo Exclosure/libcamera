@@ -1,13 +1,36 @@
 # SPDX-License-Identifier: CC0-1.0
 
-ipa_name = 'ipa_vimc'
+ipa_name = 'ipa_rpi_vc4'
+
+vc4_ipa_deps = [
+    libcamera_private,
+    libatomic,
+]
+
+vc4_ipa_libs = [
+    rpi_ipa_cam_helper_lib,
+    rpi_ipa_common_lib,
+    rpi_ipa_controller_lib
+]
+
+vc4_ipa_includes = [
+    ipa_includes,
+    libipa_includes,
+]
+
+vc4_ipa_sources = files([
+    'vc4.cpp',
+])
+
+vc4_ipa_includes += include_directories('..')
 
 mod = shared_module(ipa_name,
-                    ['vimc.cpp', libcamera_generated_ipa_headers],
+                    [vc4_ipa_sources, libcamera_generated_ipa_headers],
                     name_prefix : '',
-                    include_directories : [ipa_includes, libipa_includes],
-                    dependencies : libcamera_private,
+                    include_directories : vc4_ipa_includes,
+                    dependencies : vc4_ipa_deps,
                     link_with : libipa,
+                    link_whole : vc4_ipa_libs,
                     install : true,
                     install_dir : ipa_install_dir)
 
