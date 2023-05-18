@@ -116,31 +116,30 @@ PYBIND11_MODULE(_libcamera, m)
 		.def_property_readonly("id", &Camera::id)
 		.def("acquire", &Camera::acquire)
 		.def("release", &Camera::release)
-		.def(
-			"start", [](Camera &self, const std::unordered_map<const ControlId *, py::object> &controls) {
-				/* \todo What happens if someone calls start() multiple times? */
+		.def("start", [](Camera &self,
+		                 const std::unordered_map<const ControlId *, py::object> &controls) {
+			/* \todo What happens if someone calls start() multiple times? */
 
-				auto cm = gCameraManager.lock();
-				ASSERT(cm);
+			auto cm = gCameraManager.lock();
+			ASSERT(cm);
 
-				self.requestCompleted.connect(cm.get(), &PyCameraManager::handleRequestCompleted);
+			self.requestCompleted.connect(cm.get(), &PyCameraManager::handleRequestCompleted);
 
-				ControlList controlList(self.controls());
+			ControlList controlList(self.controls());
 
-				for (const auto &[id, obj] : controls) {
-					auto val = pyToControlValue(obj, id->type());
-					controlList.set(id->id(), val);
-				}
+			for (const auto& [id, obj]: controls) {
+				auto val = pyToControlValue(obj, id->type());
+				controlList.set(id->id(), val);
+			}
 
-				int ret = self.start(&controlList);
-				if (ret) {
-					self.requestCompleted.disconnect();
-					return ret;
-				}
+			int ret = self.start(&controlList);
+			if (ret) {
+				self.requestCompleted.disconnect();
+				return ret;
+			}
 
-				return 0;
-			},
-			py::arg("controls") = std::unordered_map<const ControlId *, py::object>())
+			return 0;
+		}, py::arg("controls") = std::unordered_map<const ControlId *, py::object>())
 
 		.def("stop", [](Camera &self) {
 			int ret = self.stop();
@@ -216,16 +215,15 @@ PYBIND11_MODULE(_libcamera, m)
 		});
 
 	pyCameraConfiguration
-		.def(
-			"__iter__", [](CameraConfiguration &self) {
-				return py::make_iterator<py::return_value_policy::reference_internal>(self);
-			},
-			py::keep_alive<0, 1>())
+		.def("__iter__", [](CameraConfiguration &self) {
+			return py::make_iterator<py::return_value_policy::reference_internal>(self);
+		}, py::keep_alive<0, 1>())
 		.def("__len__", [](CameraConfiguration &self) {
 			return self.size();
 		})
 		.def("validate", &CameraConfiguration::validate)
-		.def("at", py::overload_cast<unsigned int>(&CameraConfiguration::at), py::return_value_policy::reference_internal)
+		.def("at", py::overload_cast<unsigned int>(&CameraConfiguration::at),
+		     py::return_value_policy::reference_internal)
 		.def_property_readonly("size", &CameraConfiguration::size)
 		.def_property_readonly("empty", &CameraConfiguration::empty)
 		.def_readwrite("transform", &CameraConfiguration::transform);
@@ -278,15 +276,13 @@ PYBIND11_MODULE(_libcamera, m)
 	pyFrameBufferPlane
 		.def(py::init())
 		.def(py::init([](int fd, unsigned int offset, unsigned int length) {
-			     auto p = FrameBuffer::Plane();
-			     p.fd = SharedFD(fd);
-			     p.offset = offset;
-			     p.length = length;
-			     return p;
-		     }),
-		     py::arg("fd"), py::arg("offset"), py::arg("length"))
-		.def_property(
-			"fd",
+			auto p = FrameBuffer::Plane();
+			p.fd = SharedFD(fd);
+			p.offset = offset;
+			p.length = length;
+			return p;
+		}), py::arg("fd"), py::arg("offset"), py::arg("length"))
+		.def_property("fd",
 			[](const FrameBuffer::Plane &self) {
 				return self.fd.get();
 			},
@@ -333,11 +329,9 @@ PYBIND11_MODULE(_libcamera, m)
 
 	pyRequest
 		/* \todo Fence is not supported, so we cannot expose addBuffer() directly */
-		.def(
-			"add_buffer", [](Request &self, const Stream *stream, FrameBuffer *buffer) {
-				return self.addBuffer(stream, buffer);
-			},
-			py::keep_alive<1, 3>()) /* Request keeps Framebuffer alive */
+		.def("add_buffer", [](Request &self, const Stream *stream, FrameBuffer *buffer) {
+			return self.addBuffer(stream, buffer);
+		}, py::keep_alive<1, 3>()) /* Request keeps Framebuffer alive */
 		.def_property_readonly("status", &Request::status)
 		.def_property_readonly("buffers", &Request::buffers)
 		.def_property_readonly("cookie", &Request::cookie)
@@ -396,44 +390,55 @@ PYBIND11_MODULE(_libcamera, m)
 
 	pyTransform
 		.def(py::init([](int rotation, bool hflip, bool vflip, bool transpose) {
-			     bool ok;
+			bool ok;
 
-			     Transform t = transformFromRotation(rotation, &ok);
-			     if (!ok)
-				     throw std::invalid_argument("Invalid rotation");
+			Transform t = transformFromRotation(rotation, &ok);
+			if (!ok)
+				throw std::invalid_argument("Invalid rotation");
 
-			     if (hflip)
-				     t ^= Transform::HFlip;
-			     if (vflip)
-				     t ^= Transform::VFlip;
-			     if (transpose)
-				     t ^= Transform::Transpose;
-			     return t;
-		     }),
-		     py::arg("rotation") = 0, py::arg("hflip") = false,
-		     py::arg("vflip") = false, py::arg("transpose") = false)
+			if (hflip)
+				t ^= Transform::HFlip;
+			if (vflip)
+				t ^= Transform::VFlip;
+			if (transpose)
+				t ^= Transform::Transpose;
+			return t;
+		}), py::arg("rotation") = 0, py::arg("hflip") = false,
+		    py::arg("vflip") = false, py::arg("transpose") = false)
 		.def(py::init([](Transform &other) { return other; }))
 		.def("__str__", [](Transform &self) {
 			return "<libcamera.Transform '" + std::string(transformToString(self)) + "'>";
 		})
-		.def_property(
-			"hflip", [](Transform &self) { return !!(self & Transform::HFlip); }, [](Transform &self, bool hflip) {
+		.def_property("hflip",
+			      [](Transform &self) {
+				      return !!(self & Transform::HFlip);
+			      },
+			      [](Transform &self, bool hflip) {
 				      if (hflip)
 					      self |= Transform::HFlip;
 				      else
-					      self &= ~Transform::HFlip; })
-		.def_property(
-			"vflip", [](Transform &self) { return !!(self & Transform::VFlip); }, [](Transform &self, bool vflip) {
+					      self &= ~Transform::HFlip;
+			      })
+		.def_property("vflip",
+			      [](Transform &self) {
+				      return !!(self & Transform::VFlip);
+			      },
+			      [](Transform &self, bool vflip) {
 				      if (vflip)
 					      self |= Transform::VFlip;
 				      else
-					      self &= ~Transform::VFlip; })
-		.def_property(
-			"transpose", [](Transform &self) { return !!(self & Transform::Transpose); }, [](Transform &self, bool transpose) {
+					      self &= ~Transform::VFlip;
+			      })
+		.def_property("transpose",
+			      [](Transform &self) {
+				      return !!(self & Transform::Transpose);
+			      },
+			      [](Transform &self, bool transpose) {
 				      if (transpose)
 					      self |= Transform::Transpose;
 				      else
-					      self &= ~Transform::Transpose; })
+					      self &= ~Transform::Transpose;
+			      })
 		.def("inverse", [](Transform &self) { return -self; })
 		.def("invert", [](Transform &self) {
 			self = -self;
@@ -447,10 +452,9 @@ PYBIND11_MODULE(_libcamera, m)
 				 ColorSpace::TransferFunction transferFunction,
 				 ColorSpace::YcbcrEncoding ycbcrEncoding,
 				 ColorSpace::Range range) {
-			     return ColorSpace(primaries, transferFunction, ycbcrEncoding, range);
-		     }),
-		     py::arg("primaries"), py::arg("transferFunction"),
-		     py::arg("ycbcrEncoding"), py::arg("range"))
+			return ColorSpace(primaries, transferFunction, ycbcrEncoding, range);
+		}), py::arg("primaries"), py::arg("transferFunction"),
+		    py::arg("ycbcrEncoding"), py::arg("range"))
 		.def(py::init([](ColorSpace &other) { return other; }))
 		.def("__str__", [](ColorSpace &self) {
 			return "<libcamera.ColorSpace '" + self.toString() + "'>";
