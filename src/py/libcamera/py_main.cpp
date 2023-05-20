@@ -17,7 +17,7 @@
 #include <libcamera/libcamera.h>
 
 #include <pybind11/functional.h>
-#include <pybind11/smart_holder.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
@@ -61,8 +61,8 @@ PYBIND11_MODULE(_libcamera, m)
 	 * https://pybind11.readthedocs.io/en/latest/advanced/misc.html#avoiding-c-types-in-docstrings
 	 */
 
-	auto pyCameraManager = py::class_<PyCameraManager>(m, "CameraManager");
-	auto pyCamera = py::class_<Camera>(m, "Camera");
+	auto pyCameraManager = py::class_<PyCameraManager, std::shared_ptr<PyCameraManager>>(m, "CameraManager");
+	auto pyCamera = py::class_<Camera, std::shared_ptr<Camera>>(m, "Camera");
 	auto pyCameraConfiguration = py::class_<CameraConfiguration>(m, "CameraConfiguration");
 	auto pyCameraConfigurationStatus = py::enum_<CameraConfiguration::Status>(pyCameraConfiguration, "Status");
 	auto pyStreamConfiguration = py::class_<StreamConfiguration>(m, "StreamConfiguration");

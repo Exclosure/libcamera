@@ -82,8 +82,7 @@ protected:
 	std::vector<StreamConfiguration> config_;
 };
 
-class Camera final : public Object, public std::enable_shared_from_this<Camera>,
-		     public Extensible
+class Camera final : public Object, public std::enable_shared_from_this<Camera>, public Extensible
 {
 	LIBCAMERA_DECLARE_PRIVATE()
 
@@ -114,12 +113,13 @@ public:
 	int start(const ControlList *controls = nullptr);
 	int stop();
 
+	~Camera();
+
 private:
 	LIBCAMERA_DISABLE_COPY(Camera)
 
 	Camera(std::unique_ptr<Private> d, const std::string &id,
 	       const std::set<Stream *> &streams);
-	~Camera();
 
 	friend class PipelineHandler;
 	void disconnect();
